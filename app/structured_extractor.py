@@ -276,4 +276,33 @@ def extract_experience_records(experience_lines):
 
     return records
 
+def extract_education_records(education_lines):
+    """
+    Group education lines using the observed resume format:
+    qualification, dates, institution, academic result.
+    """
+    lines = [
+        clean_resume_line(line)
+        for line in education_lines
+        if isinstance(line, str) and clean_resume_line(line)
+    ]
+
+    records = []
+
+    for index in range(0, len(lines), 4):
+        group = lines[index:index + 4]
+
+        if len(group) != 4:
+            continue
+
+        records.append({
+            "qualification": group[0],
+            "dates": group[1],
+            "institution": group[2],
+            "result": group[3],
+        })
+
+    return records
+
+
 

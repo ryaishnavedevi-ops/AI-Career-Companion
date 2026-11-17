@@ -10,6 +10,8 @@ from app.extraction_service import process_resume
 from app.structured_extractor import (
     extract_project_records,
     extract_experience_records,
+    extract_education_records,
+
 )
 
 
@@ -203,12 +205,28 @@ def get_extracted_resume(
         and all(isinstance(line, str) for line in experience_lines)
         else []
     )
+    
+    
+    education_lines = (
+        extracted_data.get("education", [])
+        if isinstance(extracted_data, dict)
+        else []
+    )
 
+    education_records = (
+        extract_education_records(education_lines)
+        if isinstance(education_lines, list)
+        and all(isinstance(line, str) for line in education_lines)
+        else []
+    )
 
+    
     return {
         "resume_id": resume_id,
         "extracted_data": extracted_data,
         "project_records": project_records,
-        "experience_records": experience_records
+        "experience_records": experience_records,
+        "education_records": education_records,
+
     }
 

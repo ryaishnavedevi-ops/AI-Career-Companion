@@ -52,6 +52,7 @@ export default function Skills() {
           ...result.extracted_data,
           project_records: result.project_records ?? [],
           experience_records: result.experience_records ?? [],
+          education_records: result.education_records ?? [],
         });
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -170,21 +171,54 @@ export default function Skills() {
                 </div>
 
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                  {section.key === "experience" &&
-                  data.experience_records?.length > 0
-                    ? data.experience_records.length
-                    : section.key === "projects" &&
-                        data.project_records?.length > 0
-                      ? data.project_records.length
-                      : items.length}
+                  {section.key === "education" &&
+                  data.education_records?.length > 0
+                    ? data.education_records.length
+                    : section.key === "experience" &&
+                        data.experience_records?.length > 0
+                      ? data.experience_records.length
+                      : section.key === "projects" &&
+                          data.project_records?.length > 0
+                        ? data.project_records.length
+                        : items.length}
                 </span>
               </div>
 
-              
-              
-              {section.key === "experience" &&
-              Array.isArray(data.experience_records) &&
-              data.experience_records.length > 0 ? (
+              {section.key === "education" &&
+              Array.isArray(data.education_records) &&
+              data.education_records.length > 0 ? (
+                <div className="space-y-4">
+                  {data.education_records.map((education, index) => (
+                    <div
+                      key={`${education.institution}-${index}`}
+                      className="rounded-2xl border border-violet-100 bg-violet-50/40 p-5"
+                    >
+                      <h4 className="text-lg font-bold text-slate-900">
+                        {education.qualification}
+                      </h4>
+
+                      <p className="mt-2 font-medium text-violet-600">
+                        {education.institution}
+                      </p>
+
+                      <p className="mt-3 text-sm text-slate-500">
+                        {education.dates}
+                      </p>
+
+                      <p className="mt-2 text-sm font-semibold text-slate-700">
+                        {education.result}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {section.key === "education" &&
+              Array.isArray(data.education_records) &&
+              data.education_records.length > 0 ? null : section.key ===
+                  "experience" &&
+                Array.isArray(data.experience_records) &&
+                data.experience_records.length > 0 ? (
                 <div className="space-y-4">
                   {data.experience_records.map((experience, index) => (
                     <div
@@ -213,16 +247,15 @@ export default function Skills() {
                             >
                               {responsibility}
                             </li>
-                          )
+                          ),
                         )}
                       </ul>
                     </div>
                   ))}
                 </div>
               ) : section.key === "projects" &&
-                  Array.isArray(data.project_records) &&
-                  data.project_records.length > 0 ? (
-
+                Array.isArray(data.project_records) &&
+                data.project_records.length > 0 ? (
                 <div className="space-y-4">
                   {data.project_records.map((project, index) => (
                     <div
