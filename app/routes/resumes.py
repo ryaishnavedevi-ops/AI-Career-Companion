@@ -7,6 +7,12 @@ from io import BytesIO
 from app.models import ResumeExtraction
 from app.extraction_service import process_resume
 
+from app.structured_extractor import (
+    extract_project_records,
+    extract_experience_records,
+)
+
+
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
@@ -168,7 +174,41 @@ def get_extracted_resume(
             detail="No extracted data found for this resume"
         )
 
+    
+    extracted_data = extraction.extracted_data
+
+    project_lines = (
+        extracted_data.get("projects", [])
+        if isinstance(extracted_data, dict)
+        else []
+    )
+
+    project_records = (
+        extract_project_records(project_lines)
+        if isinstance(project_lines, list)
+        and all(isinstance(line, str) for line in project_lines)
+        else []
+    )
+    
+    
+    experience_lines = (
+        extracted_data.get("experience", [])
+        if isinstance(extracted_data, dict)
+        else []
+    )
+
+    experience_records = (
+        extract_experience_records(experience_lines)
+        if isinstance(experience_lines, list)
+        and all(isinstance(line, str) for line in experience_lines)
+        else []
+    )
+
+
     return {
         "resume_id": resume_id,
-        "extracted_data": extraction.extracted_data
+        "extracted_data": extracted_data,
+        "project_records": project_records,
+        "experience_records": experience_records
     }
+
