@@ -53,6 +53,7 @@ export default function Skills() {
           project_records: result.project_records ?? [],
           experience_records: result.experience_records ?? [],
           education_records: result.education_records ?? [],
+          award_records: result.award_records ?? [],
         });
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -171,18 +172,37 @@ export default function Skills() {
                 </div>
 
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                  {section.key === "education" &&
-                  data.education_records?.length > 0
-                    ? data.education_records.length
-                    : section.key === "experience" &&
-                        data.experience_records?.length > 0
-                      ? data.experience_records.length
-                      : section.key === "projects" &&
-                          data.project_records?.length > 0
-                        ? data.project_records.length
-                        : items.length}
+                  {section.key === "awards" && data.award_records?.length > 0
+                    ? data.award_records.length
+                    : section.key === "education" &&
+                        data.education_records?.length > 0
+                      ? data.education_records.length
+                      : section.key === "experience" &&
+                          data.experience_records?.length > 0
+                        ? data.experience_records.length
+                        : section.key === "projects" &&
+                            data.project_records?.length > 0
+                          ? data.project_records.length
+                          : items.length}
                 </span>
               </div>
+
+              {section.key === "awards" &&
+              Array.isArray(data.award_records) &&
+              data.award_records.length > 0 ? (
+                <div className="space-y-3">
+                  {data.award_records.map((award, index) => (
+                    <div
+                      key={index}
+                      className="rounded-xl border border-violet-100 bg-violet-50/40 p-4"
+                    >
+                      <p className="text-sm leading-6 text-slate-700">
+                        {award.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               {section.key === "education" &&
               Array.isArray(data.education_records) &&
@@ -213,9 +233,12 @@ export default function Skills() {
                 </div>
               ) : null}
 
-              {section.key === "education" &&
-              Array.isArray(data.education_records) &&
-              data.education_records.length > 0 ? null : section.key ===
+              {section.key === "awards" &&
+              Array.isArray(data.award_records) &&
+              data.award_records.length > 0 ? null : section.key ===
+                  "education" &&
+                Array.isArray(data.education_records) &&
+                data.education_records.length > 0 ? null : section.key ===
                   "experience" &&
                 Array.isArray(data.experience_records) &&
                 data.experience_records.length > 0 ? (

@@ -11,6 +11,7 @@ from app.structured_extractor import (
     extract_project_records,
     extract_experience_records,
     extract_education_records,
+    extract_award_records,
 
 )
 
@@ -219,6 +220,19 @@ def get_extracted_resume(
         and all(isinstance(line, str) for line in education_lines)
         else []
     )
+    
+    
+    award_lines = (
+        extracted_data.get("awards", [])
+        if isinstance(extracted_data, dict)
+        else []
+    )
+
+    award_records = (
+        extract_award_records(award_lines)
+        if isinstance(award_lines, list)
+        else []
+    )
 
     
     return {
@@ -227,6 +241,7 @@ def get_extracted_resume(
         "project_records": project_records,
         "experience_records": experience_records,
         "education_records": education_records,
+        "award_records": award_records,
 
     }
 

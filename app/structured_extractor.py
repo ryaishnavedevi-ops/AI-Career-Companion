@@ -305,4 +305,39 @@ def extract_education_records(education_lines):
     return records
 
 
+def extract_award_records(award_lines):
+    """
+    Combine PDF-wrapped award and achievement lines
+    into complete entries.
+    """
+    lines = [
+        clean_resume_line(line)
+        for line in award_lines
+        if isinstance(line, str) and clean_resume_line(line)
+    ]
+
+    records = []
+    current = ""
+
+    for line in lines:
+        if current:
+            current += " " + line
+        else:
+            current = line
+
+        if current.endswith((".", "!", "?")):
+            records.append({
+                "description": current
+            })
+            current = ""
+
+    if current:
+        records.append({
+            "description": current
+        })
+
+    return records
+
+
+
 
