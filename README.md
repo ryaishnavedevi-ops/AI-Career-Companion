@@ -26,9 +26,9 @@ An AI-powered career companion designed to help students with internship applica
 ## Project Milestones
 
 - [x] Milestone 1.1 – Research and Technical Understanding
-- [ ] Milestone 1.2 – System Architecture
-- [ ] Milestone 1.3 – Student Profile Module
-- [ ] Milestone 1.4 – Resume Parsing and Extraction
+- [x ] Milestone 1.2 – System Architecture
+- [x ] Milestone 1.3 – Student Profile Module
+- [x ] Milestone 1.4 – Resume Parsing and Extraction
 
 ## Documentation
 
