@@ -339,5 +339,48 @@ def extract_award_records(award_lines):
     return records
 
 
+def extract_skill_records(skill_lines):
+    """
+    Convert raw resume skills into categorized skill records.
+    """
+
+    records = []
+    soft_skills = []
+
+    for raw_line in skill_lines:
+        if not isinstance(raw_line, str):
+            continue
+
+        line = clean_resume_line(raw_line)
+
+        if not line:
+            continue
+
+        if ":" in line:
+            category, values = line.split(":", 1)
+
+            skills = [
+                skill.strip()
+                for skill in values.split(",")
+                if skill.strip()
+            ]
+
+            if skills:
+                records.append({
+                    "category": category.strip(),
+                    "skills": skills,
+                })
+        else:
+            soft_skills.append(line)
+
+    if soft_skills:
+        records.append({
+            "category": "Soft Skills",
+            "skills": soft_skills,
+        })
+
+    return records
+
+
 
 
