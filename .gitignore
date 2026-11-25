@@ -33,3 +33,10 @@ data/remaining_critical_records.json
 
 # Raw source dataset
 data/raw/
+
+# RAG generated artifacts
+data/job_chunks.json
+data/job_embeddings.npy
+data/job_index_metadata.json
+data/embedding_checkpoint.npz
+data/embedding_checkpoint.tmp.npz
