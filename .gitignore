@@ -15,3 +15,21 @@ Thumbs.db
 *.db-journal
 *.db-wal
 *.db-shm
+
+# Raw internship dataset
+data/raw/
+
+# Internship dataset - redistribution permissions pending
+data/internships.json
+data/job_overrides.json
+
+# Intermediate generated dataset
+data/internships_draft.json
+
+# Temporary dataset review and audit files
+data/*review*.json
+data/*review*.txt
+data/remaining_critical_records.json
+
+# Raw source dataset
+data/raw/
