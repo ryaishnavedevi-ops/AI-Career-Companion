@@ -55,7 +55,7 @@ An AI-powered career companion designed to help students with internship applica
 
 - [x] M2.1 – Internship Dataset and Knowledge Base
 - [x] M2.2 – RAG Pipeline and Semantic Search
-- [ ] M2.3 – Job-Resume Matching Agent
+- [x] M2.3 – Job-Resume Matching Agent
 - [ ] M2.4 – Matching and Retrieval Evaluation
 
 ## Implemented Features
@@ -326,8 +326,285 @@ a lightweight alternative to a dedicated vector database.
 - Comprehensive retrieval and matching evaluation is planned for M2.4.
 - Dataset redistribution and third-party processing permissions require verification.
 
-Student-specific compatibility scoring, skill gap analysis and
-matching explanations will be implemented in M2.3.
+## Job-Resume Matching Agent (M2.3)
+
+The Job-Resume Matching Agent combines resume-based semantic retrieval, structured requirement comparison, compatibility scoring and evidence-based recommendation explanations.
+
+The agent uses the internship knowledge base and RAG pipeline implemented in M2.1 and M2.2 to generate personalized internship recommendations.
+
+### Implemented Features
+
+- Structured student profile construction from processed resumes.
+- Skill normalization and evidence tracking.
+- Resume-based semantic query generation.
+- Multi-query internship retrieval and candidate deduplication.
+- Required and preferred skill comparison.
+- Alternative skill requirement handling.
+- Education and experience requirement comparison.
+- Project-based practical activity matching.
+- Weighted compatibility scoring.
+- Evidence coverage calculation.
+- Technical requirement availability adjustments.
+- Eligibility requirement verification flags.
+- Ranked internship recommendations.
+- Matching strengths and skill gap explanations.
+- Personalized improvement priorities.
+- FastAPI recommendation endpoint.
+- React-based recommendation interface.
+
+### Matching Agent Architecture
+
+```mermaid
+flowchart TD
+    A[Processed Resume] --> B[Student Profile Builder]
+    B --> C[Semantic Query Builder]
+    C --> D[RAG Internship Retriever]
+    K[Internship Knowledge Base] --> D
+    D --> E[Candidate Deduplication]
+    E --> F[Student-Job Comparison]
+    B --> F
+    F --> G[Compatibility Scoring]
+    G --> H[Ranking Refinement]
+    H --> I[Recommendation Explanations]
+    I --> J[FastAPI Recommendation Endpoint]
+    J --> L[React Recommendation Dashboard]
+```
+
+### Matching Agent Components
+
+| Module | Responsibility |
+|---|---|
+| student_profile_builder.py | Constructs normalized student profiles |
+| job_query_builder.py | Generates resume-based semantic queries |
+| job_candidate_retriever.py | Retrieves and deduplicates internship candidates |
+| job_requirement_parser.py | Identifies alternative skill requirements |
+| job_resume_matcher.py | Compares required and preferred skills |
+| job_education_matcher.py | Evaluates education alignment |
+| job_experience_matcher.py | Evaluates experience alignment |
+| job_project_matcher.py | Compares practical project activities |
+| student_job_comparator.py | Combines structured comparison results |
+| job_compatibility_scorer.py | Calculates compatibility and evidence coverage |
+| job_matching_refinement.py | Refines ranking and detects eligibility constraints |
+| job_ranking_engine.py | Coordinates candidate ranking |
+| job_recommendation_explainer.py | Generates explanations and improvement priorities |
+
+### Resume-Based Retrieval
+
+The student profile is used to generate up to four semantic query categories:
+
+- Technical skills.
+- Projects.
+- Professional experience.
+- Education.
+
+Queries are embedded using Gemini and compared against the persistent NumPy vector index.
+
+The recommendation endpoint retrieves up to 10 internships per query and considers up to 40 unique candidates before structured ranking.
+
+Duplicate internships are removed using their job identifiers.
+
+### Compatibility Scoring
+
+The matching agent uses a weighted scoring approach.
+
+| Matching Component | Weight |
+|---|---:|
+| Required skills | 40% |
+| Preferred skills | 10% |
+| Education | 15% |
+| Experience | 15% |
+| Projects | 10% |
+| Semantic similarity | 10% |
+| **Total** | **100%** |
+
+Each evaluated component contributes a normalized matching ratio.
+
+Requirements that are not specified are excluded from applicable scoring weights. Unresolved requirements reduce evidence coverage instead of being treated as confirmed matches.
+
+The scoring formulas are:
+
+```text
+Earned Weight = Sum of evaluated weighted matching ratios
+
+Compatibility Score = (Earned Weight / Evaluated Weight) × 100
+
+Evidence Coverage = Evaluated Weight / Applicable Weight
+
+Base Ranking Score = Compatibility Score × Evidence Coverage
+
+Final Ranking Score = Base Ranking Score × Technical Evidence Factor
+```
+
+Scores may remain unavailable when insufficient evidence exists.
+
+### Technical Evidence Refinement
+
+The ranking engine adjusts scores when extracted technical requirements are limited.
+
+| Technical Requirement Availability | Ranking Factor |
+|---|---:|
+| Required technical skills available | 1.00 |
+| Technical skills available only as preferred requirements | 0.75 |
+| Insufficient technical skill information | 0.50 |
+
+These factors are heuristic implementation choices and have not yet been calibrated through formal evaluation.
+
+Compatibility and ranking scores are matching indicators, not probabilities of internship selection.
+
+### Eligibility Verification
+
+The matching agent identifies unresolved eligibility conditions, including:
+
+- Education and degree requirements.
+- Academic year and academic performance requirements.
+- Experience requirements.
+- Integrated degree program eligibility.
+- Citizenship requirements.
+- Security clearance mentions.
+- Work authorization and sponsorship requirements.
+
+Unresolved conditions are presented as verification warnings rather than confirmed eligibility decisions.
+
+### Recommendation Explanations
+
+Each recommendation includes:
+
+- Internship information.
+- Compatibility and ranking scores.
+- Evidence coverage.
+- Matched skills.
+- Required and preferred skill gaps.
+- Matching strengths.
+- Project and education evidence.
+- Improvement priorities.
+- Eligibility verification details.
+- Evidence limitations.
+
+Missing resume evidence does not necessarily mean that the student lacks a particular skill.
+
+### Recommendation API
+
+**Endpoint:** `POST /recommendations/generate`
+
+Example request:
+
+```json
+{
+  "candidate_id": "existing-candidate-id",
+  "resume_id": "processed-resume-id",
+  "top_k": 10
+}
+```
+
+The recommendation count defaults to 10 and accepts integers from 1 to 20.
+
+The resume must belong to the specified candidate and have completed processing.
+
+The response contains:
+
+- candidate_id
+- resume_id
+- ranking_statistics
+- retrieval_statistics
+- queries
+- recommendations
+
+#### API Response Status Codes
+
+| Status | Description |
+|---|---|
+| 200 | Recommendations generated successfully |
+| 403 | Resume does not belong to the specified candidate |
+| 404 | Candidate or resume not found |
+| 409 | Resume processing or extraction is incomplete |
+| 422 | Invalid request or insufficient profile information |
+| 503 | Recommendation service unavailable |
+
+Interactive API documentation is available at `http://127.0.0.1:8000/docs` when the backend is running.
+
+### Frontend Integration
+
+The React dashboard provides a dedicated Recommendations page containing:
+
+- Configurable recommendation count.
+- Recommendation generation controls.
+- Loading and error states.
+- Ranked internship cards.
+- Compatibility and ranking score indicators.
+- Evidence coverage information.
+- Matched skill indicators.
+- Expandable recommendation explanations.
+- Skill gaps and improvement priorities.
+- Eligibility warnings.
+- Historical dataset disclaimer.
+
+Existing student profile retrieval and updating are supported through GET and PUT requests, avoiding unnecessary duplicate profile creation.
+
+### Running the Recommendation System
+
+Ensure the Python dependencies, Gemini API configuration, internship knowledge base and generated vector index are available.
+
+Start the backend from the project root:
+
+```bash
+python -m uvicorn app.main:app --reload
+```
+
+Start the frontend in a separate terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open the frontend URL displayed by Vite.
+
+Create or load a student profile, upload and process a resume, and navigate to Recommendations to generate internship matches.
+
+### Functional Validation
+
+| Validation | Result |
+|---|---|
+| Dataset-wide comparison validation | 150/150 records processed |
+| Controlled recommendation explanation tests | 20/20 passed |
+| Refined end-to-end pipeline checks | 13/13 passed |
+| Live recommendation explanation checks | 13/13 passed |
+| API registration and request schema checks | 10/10 passed |
+| Live recommendation API checks | 20/20 passed |
+| Advanced controlled API error-path checks | 8/8 passed |
+| Backend compilation | Passed |
+| Python dependency validation | Passed |
+| Full frontend ESLint | Passed |
+| Frontend production build | Passed |
+| Git whitespace validation | Passed |
+
+A live API test using a processed resume retrieved 20 unique internship candidates, ranked all 20 and returned the requested 10 recommendations in approximately 6.14 seconds.
+
+Desktop browser testing confirmed recommendation rendering, score visualization, expandable explanations, skill gaps and eligibility warnings.
+
+Mobile testing confirmed the initial recommendation layout, sidebar navigation and student profile retrieval and updating.
+
+These results represent functional implementation checks. They do not establish measured recommendation accuracy.
+
+### Current Limitations
+
+- Recommendations use historical internship postings rather than verified active vacancies.
+- Structured requirement extraction may contain incomplete or inaccurate information.
+- Skill matching depends on the available vocabulary and resume evidence.
+- Complex alternative requirements require further evaluation.
+- Education and experience requirements may remain unresolved.
+- Project matching relies on recognized activity patterns.
+- Compatibility weights and ranking adjustments are heuristic.
+- Recommendation explanations are template-based.
+- Eligibility warnings do not establish confirmed eligibility or ineligibility.
+- Gemini API availability and rate limits affect semantic retrieval.
+- Recommendation results are not persistently stored in the frontend.
+- Authentication and secure account management are not implemented.
+- Mobile recommendation result cards and some frontend error states require further testing.
+- Dataset redistribution and third-party processing permissions require verification.
+
+Formal retrieval quality assessment, matching accuracy evaluation, ranking analysis and further refinement are planned for M2.4.
 
 
 ## Documentation
@@ -336,12 +613,10 @@ Research and technical documentation are available in the `docs/` directory.
 
 ## Project Status
 
-## Project Status
-
 - Milestone 1 – Completed.
 - M2.1 – Internship Dataset and Knowledge Base completed.
 - M2.2 – RAG Pipeline and Semantic Search completed.
-- M2.3 – Job-Resume Matching Agent is the next development phase.
-- M2.4 – Matching and Retrieval Evaluation is pending.
+- M2.3 – Job-Resume Matching Agent completed.
+- M2.4 – Matching and Retrieval Evaluation is the next development phase.
 
 The project is under active development.

@@ -20,12 +20,14 @@ import StudentProfile from "./components/StudentProfile";
 import ResumeUpload from "./components/ResumeUpload";
 
 import Skills from "./components/Skills";
+import Recommendations from "./components/Recommendations";
 
 const navigation = [
   { name: "Dashboard", icon: LayoutDashboard },
   { name: "My Profile", icon: UserRound },
   { name: "My Resume", icon: FileText },
   { name: "My Skills", icon: BrainCircuit },
+  { name: "Recommendations", icon: BriefcaseBusiness },
   { name: "Career Tools", icon: BriefcaseBusiness, comingSoon: true },
 ];
 
@@ -174,7 +176,7 @@ function App() {
                   </p>
                 </div>
 
-                <div className="grid gap-5 md:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
                   {[
                     {
                       title: "Create your profile",
@@ -198,6 +200,15 @@ function App() {
                       icon: BrainCircuit,
                       page: "My Skills",
                       color: "bg-emerald-50 text-emerald-600",
+                    },
+
+                    {
+                      title: "Find internships",
+                      description:
+                        "Discover resume-based internship matches and skill gaps.",
+                      icon: BriefcaseBusiness,
+                      page: "Recommendations",
+                      color: "bg-indigo-50 text-indigo-600",
                     },
                   ].map((item) => {
                     const Icon = item.icon;
@@ -264,8 +275,9 @@ function App() {
                     <h3 className="font-bold">Career tools</h3>
                   </div>
                   <p className="text-sm leading-7 text-slate-500">
-                    Internship matching, skill-gap analysis, cover letters, and
-                    interview preparation are planned for upcoming milestones.
+                    Internship matching and skill-gap analysis are now available
+                    in Recommendations. Cover letter generation and interview
+                    preparation are planned for upcoming milestones.
                   </p>
                   <span className="mt-5 inline-block rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500">
                     Coming soon
@@ -279,6 +291,8 @@ function App() {
             <ResumeUpload />
           ) : activePage === "My Skills" ? (
             <Skills />
+          ) : activePage === "Recommendations" ? (
+            <Recommendations />
           ) : (
             <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm md:p-12">
               <div className="mb-5 inline-flex rounded-2xl bg-violet-50 p-4 text-violet-600">

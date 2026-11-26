@@ -23,14 +23,15 @@ const sections = [
 
 export default function Skills() {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(
+    () => Boolean(localStorage.getItem("resume_id"))
+  );
   const [error, setError] = useState("");
 
   useEffect(() => {
     const resumeId = localStorage.getItem("resume_id");
 
     if (!resumeId) {
-      setLoading(false);
       return;
     }
 
