@@ -1,3 +1,8 @@
+from app.job_retrieval_config import (
+    DEFAULT_TOP_K_PER_QUERY,
+    DEFAULT_MAX_CANDIDATES,
+)
+
 from app.student_job_comparator import compare_student_job
 from app.job_compatibility_scorer import calculate_compatibility
 
@@ -21,6 +26,10 @@ def ranking_sort_key(item):
     """Provide deterministic internship ranking."""
 
     return (
+        bool(item.get(
+            "mandatory_eligibility_mismatch", False
+        )),
+
         -sortable_value(item["ranking_score"]),
 
         -sortable_value(item["evidence_coverage"]),
@@ -103,7 +112,8 @@ def rank_job_candidates(
 
         scoring = refine_job_scoring(
             scoring,
-            job
+            job,
+            comparison=comparison
         )
 
         required_skills = comparison[
@@ -149,6 +159,9 @@ def rank_job_candidates(
 
             "missing_required_skills":
                 required_skills["missing_skills"],
+
+            "mandatory_eligibility_mismatch":
+                scoring["mandatory_eligibility_mismatch"],
 
             "eligibility_review_required":
                 scoring["eligibility_review_required"],
@@ -212,6 +225,11 @@ def rank_job_candidates(
                 for item in ranked_jobs
             ),
 
+            "mandatory_eligibility_mismatch_count": sum(
+                item["mandatory_eligibility_mismatch"]
+                for item in ranked_jobs
+            ),
+
             "eligibility_review_count": sum(
                 item["eligibility_review_required"]
                 for item in ranked_jobs
@@ -245,8 +263,8 @@ class InternshipRecommendationEngine:
         self,
         profile,
         top_k=10,
-        top_k_per_query=10,
-        max_candidates=40,
+        top_k_per_query=DEFAULT_TOP_K_PER_QUERY,
+        max_candidates=DEFAULT_MAX_CANDIDATES,
         reference_year=None,
     ):
         """Retrieve relevant internships and rank compatibility."""

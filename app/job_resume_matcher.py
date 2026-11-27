@@ -1,4 +1,7 @@
 from app.student_profile_builder import normalize_skill
+from app.job_skill_requirement_resolver import (
+    resolve_skill_requirements,
+)
 from app.job_requirement_parser import (
     parse_job_skill_requirements,
 )
@@ -241,22 +244,33 @@ def match_job_skills(profile, job):
         profile
     )
 
+    resolved = resolve_skill_requirements(job)
+
+    resolved_job = {
+        **job,
+        "required_skills": resolved["required_skills"],
+        "preferred_skills": resolved["preferred_skills"],
+    }
+
     requirements = parse_job_skill_requirements(
-        job
+        resolved_job
+    )
+
+    required_groups = (
+        requirements["required_alternative_groups"]
+        + resolved["required_alternative_groups"]
     )
 
     required_match = compare_skills(
         student_skills=student_skills,
-        job_skills=job.get("required_skills", []),
+        job_skills=resolved["required_skills"],
         evidence_lookup=evidence_lookup,
-        alternative_groups=requirements[
-            "required_alternative_groups"
-        ],
+        alternative_groups=required_groups,
     )
 
     preferred_match = compare_skills(
         student_skills=student_skills,
-        job_skills=job.get("preferred_skills", []),
+        job_skills=resolved["preferred_skills"],
         evidence_lookup=evidence_lookup,
         alternative_groups=requirements[
             "preferred_alternative_groups"
@@ -271,4 +285,6 @@ def match_job_skills(profile, job):
         "required_skills": required_match,
 
         "preferred_skills": preferred_match,
+
+        "requirement_adjustments": resolved["adjustments"],
     }

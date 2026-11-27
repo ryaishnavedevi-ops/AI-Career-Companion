@@ -40,3 +40,13 @@ data/job_embeddings.npy
 data/job_index_metadata.json
 data/embedding_checkpoint.npz
 data/embedding_checkpoint.tmp.npz
+/evaluation/job_review_catalogue.txt
+
+# Local evaluation artifacts - redistribution permissions pending
+/evaluation/*.json
+/evaluation/*.txt
+/evaluation/*.tmp
+/evaluation/*.log
+
+# Synthetic evaluation profiles
+!/evaluation/sample_profiles.json

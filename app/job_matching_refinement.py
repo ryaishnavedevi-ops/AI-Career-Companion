@@ -215,6 +215,184 @@ def assess_technical_requirements(job):
     }
 
 
+
+def assess_technical_alignment(comparison):
+    """Assess technical alignment using resolved matching evidence."""
+
+    soft_skills = {
+        skill.casefold()
+        for skill in SOFT_SKILLS
+    }
+
+    components = comparison["components"]
+
+    def summarize(component):
+
+        technical_skills = []
+        matched_skills = []
+        missing_requirements = []
+
+        total = 0
+        matched = 0
+
+        for requirement in component.get(
+            "requirement_results", []
+        ):
+
+            options = requirement.get("skills", [])
+
+            if not options:
+                continue
+
+            # Mixed soft/technical alternatives do not
+            # establish a mandatory technical requirement.
+            if any(
+                skill.casefold() in soft_skills
+                for skill in options
+            ):
+                continue
+
+            total += 1
+
+            technical_skills.extend(options)
+
+            matched_options = [
+                skill
+                for skill in requirement.get(
+                    "matched_options", []
+                )
+                if skill.casefold() not in soft_skills
+            ]
+
+            if (
+                requirement.get("satisfied") is True
+                and matched_options
+            ):
+
+                matched += 1
+                matched_skills.extend(matched_options)
+
+            else:
+
+                missing_requirements.append(
+                    requirement.get("requirement")
+                    or " OR ".join(options)
+                )
+
+        return {
+            "skills": list(dict.fromkeys(technical_skills)),
+            "matched_skills": list(dict.fromkeys(matched_skills)),
+            "missing_requirements": missing_requirements,
+            "total_requirements": total,
+            "matched_requirements": matched,
+            "match_ratio": (
+                matched / total if total else None
+            ),
+        }
+
+    required = summarize(
+        components["required_skills"]
+    )
+
+    preferred = summarize(
+        components["preferred_skills"]
+    )
+
+    # Preserve existing assessment status names.
+    assessment = assess_technical_requirements({
+        "required_skills": required["skills"],
+        "preferred_skills": preferred["skills"],
+    })
+
+    if required["total_requirements"]:
+
+        if required["matched_requirements"]:
+
+            alignment_status = (
+                "required_technical_evidence_available"
+            )
+
+            factor = 1.0
+
+            reason = (
+                "At least one required technical "
+                "requirement is supported by student evidence."
+            )
+
+        else:
+
+            alignment_status = (
+                "no_required_technical_match"
+            )
+
+            factor = 0.50
+
+            reason = (
+                "Technical requirements are available, "
+                "but none are supported by recorded "
+                "student skill evidence."
+            )
+
+    elif preferred["total_requirements"]:
+
+        if preferred["matched_requirements"]:
+
+            alignment_status = (
+                "preferred_technical_evidence_available"
+            )
+
+            factor = 0.75
+
+            reason = (
+                "Technical alignment is supported "
+                "by preferred skill evidence only."
+            )
+
+        else:
+
+            alignment_status = (
+                "no_preferred_technical_match"
+            )
+
+            factor = 0.50
+
+            reason = (
+                "Preferred technical requirements exist, "
+                "but no matching skill evidence is available."
+            )
+
+    else:
+
+        alignment_status = (
+            "technical_requirements_unavailable"
+        )
+
+        factor = 0.50
+
+        reason = (
+            "No resolved technical skill requirements "
+            "are available. Technical compatibility "
+            "cannot be established from skill matching."
+        )
+
+    assessment.update({
+        "alignment_status": alignment_status,
+
+        "required_technical_alignment": required,
+
+        "preferred_technical_alignment": preferred,
+
+        "ranking_factor": factor,
+
+        "reason": reason,
+
+        "assessment_basis":
+            "resolved_skill_requirement_results",
+    })
+
+    return assessment
+
+
 ELIGIBILITY_PATTERNS = {
     "citizenship_requirement": (
         r"\b(?:"
@@ -249,6 +427,7 @@ def detect_additional_eligibility(job):
 
     for field in [
         "qualifications",
+        "responsibilities",
         "education_requirements",
         "experience_requirements",
         "job_description",
@@ -303,13 +482,15 @@ def detect_additional_eligibility(job):
     return reviews
 
 
-def refine_job_scoring(scoring, job):
+def refine_job_scoring(scoring, job, comparison=None):
     """Refine ranking without changing base compatibility."""
 
     refined = deepcopy(scoring)
 
     technical_assessment = (
-        assess_technical_requirements(job)
+        assess_technical_alignment(comparison)
+        if comparison is not None
+        else assess_technical_requirements(job)
     )
 
     original_ranking = refined["ranking_score"]

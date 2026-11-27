@@ -134,5 +134,8 @@ def compare_student_job(
 
         "components": components,
 
+        "requirement_adjustments":
+            skill_result.get("requirement_adjustments", []),
+
         "comparison_summary": comparison_summary,
     }

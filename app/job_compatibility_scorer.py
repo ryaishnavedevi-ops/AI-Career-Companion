@@ -152,11 +152,26 @@ def calculate_compatibility(
 
     eligibility_review = []
 
+    mandatory_eligibility_mismatch = (
+        components["education"].get(
+            "mandatory_requirement"
+        ) is True
+        and components["education"].get(
+            "confirmed_degree_mismatch"
+        ) is True
+        and components["education"].get(
+            "status"
+        ) == "mismatch"
+    )
+
     for name in ["education", "experience"]:
 
         status = breakdown[name]["scoring_status"]
 
-        if status == "unresolved":
+        if (
+            status == "unresolved"
+            or components[name].get("status") == "mismatch"
+        ):
 
             eligibility_review.append({
                 "component": name,
@@ -181,6 +196,9 @@ def calculate_compatibility(
         "evidence_coverage": evidence_coverage,
 
         "semantic_score": semantic_score,
+
+        "mandatory_eligibility_mismatch":
+            mandatory_eligibility_mismatch,
 
         "eligibility_review_required": bool(
             eligibility_review

@@ -3,6 +3,11 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from ..job_retrieval_config import (
+    DEFAULT_TOP_K_PER_QUERY,
+    DEFAULT_MAX_CANDIDATES,
+)
+
 from ..database import get_db
 
 from ..models import (
@@ -161,8 +166,8 @@ def generate_recommendations(
         result = engine.recommend(
             profile,
             top_k=request.top_k,
-            top_k_per_query=10,
-            max_candidates=40
+            top_k_per_query=DEFAULT_TOP_K_PER_QUERY,
+            max_candidates=DEFAULT_MAX_CANDIDATES
         )
 
     except Exception:

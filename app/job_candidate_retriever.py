@@ -1,3 +1,8 @@
+from app.job_retrieval_config import (
+    DEFAULT_TOP_K_PER_QUERY,
+    DEFAULT_MAX_CANDIDATES,
+)
+
 from app.job_query_builder import build_search_queries
 from app.job_retriever import JobRetriever
 
@@ -14,8 +19,8 @@ class JobCandidateRetriever:
     def retrieve_candidates(
         self,
         profile,
-        top_k_per_query=10,
-        max_candidates=40,
+        top_k_per_query=DEFAULT_TOP_K_PER_QUERY,
+        max_candidates=DEFAULT_MAX_CANDIDATES,
     ):
         """Retrieve unique internships using multiple queries."""
 

@@ -1,6 +1,10 @@
 import re
 from datetime import date
 
+from app.job_education_requirement_resolver import (
+    resolve_education_requirement,
+)
+
 
 DEGREE_PATTERNS = {
     "doctorate": r"\b(?:ph\.?d\.?|doctorate|doctoral)\b",
@@ -187,7 +191,8 @@ def match_job_education(
 ):
     """Evaluate education alignment conservatively."""
 
-    requirement = job.get("education_requirements")
+    resolution = resolve_education_requirement(job)
+    requirement = resolution["requirement"]
 
     if not isinstance(requirement, str) or not requirement.strip():
 
@@ -217,6 +222,9 @@ def match_job_education(
         )
     )
 
+    if resolution["strict_degree_level"] == "doctorate":
+        pursuing_required = True
+
     completed_required = bool(
         re.search(
             r"\b(?:completed|graduated|must hold)\b",
@@ -228,6 +236,19 @@ def match_job_education(
     records = normalize_education_records(
         profile.get("education", []),
         reference_year
+    )
+
+    strict_level = resolution["strict_degree_level"]
+
+    confirmed_degree_mismatch = (
+        resolution["mandatory"] is True
+        and strict_level is not None
+        and bool(records)
+        and all(
+            record["degree_levels"]
+            and strict_level not in record["degree_levels"]
+            for record in records
+        )
     )
 
     evidence = []
@@ -359,6 +380,15 @@ def match_job_education(
         ratio = None
         reason = "No student education records available."
 
+    elif confirmed_degree_mismatch:
+
+        status = "mismatch"
+        ratio = 0.0
+        reason = (
+            "Recorded education does not meet "
+            "the explicit mandatory degree requirement."
+        )
+
     elif matched_evidence and constraints:
 
         status = "partial_match"
@@ -390,6 +420,9 @@ def match_job_education(
         "status": status,
         "match_ratio": ratio,
         "requirement": requirement,
+        "requirement_source": resolution["source"],
+        "mandatory_requirement": resolution["mandatory"],
+        "confirmed_degree_mismatch": confirmed_degree_mismatch,
         "required_degree_levels": required_levels,
         "required_fields": required_fields,
         "pursuing_required": pursuing_required,

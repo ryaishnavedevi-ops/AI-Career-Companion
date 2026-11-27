@@ -56,7 +56,7 @@ An AI-powered career companion designed to help students with internship applica
 - [x] M2.1 – Internship Dataset and Knowledge Base
 - [x] M2.2 – RAG Pipeline and Semantic Search
 - [x] M2.3 – Job-Resume Matching Agent
-- [ ] M2.4 – Matching and Retrieval Evaluation
+- [x] M2.4 - Matching and Retrieval Evaluation
 
 ## Implemented Features
 
@@ -323,7 +323,7 @@ a lightweight alternative to a dedicated vector database.
 - Query embedding requires an external API connection.
 - A reliable relevance threshold has not yet been established.
 - Historical postings are not verified active internship vacancies.
-- Comprehensive retrieval and matching evaluation is planned for M2.4.
+- Retrieval and matching evaluation was completed in M2.4 using partially annotated evaluation data.
 - Dataset redistribution and third-party processing permissions require verification.
 
 ## Job-Resume Matching Agent (M2.3)
@@ -399,7 +399,7 @@ The student profile is used to generate up to four semantic query categories:
 
 Queries are embedded using Gemini and compared against the persistent NumPy vector index.
 
-The recommendation endpoint retrieves up to 10 internships per query and considers up to 40 unique candidates before structured ranking.
+The recommendation endpoint retrieves up to 15 internships per query and considers up to 40 unique candidates before structured ranking.
 
 Duplicate internships are removed using their job identifiers.
 
@@ -439,17 +439,30 @@ Scores may remain unavailable when insufficient evidence exists.
 
 ### Technical Evidence Refinement
 
-The ranking engine adjusts scores when extracted technical requirements are limited.
+The ranking engine applies technical evidence factors using
+resolved job requirements and student matching evidence.
 
-| Technical Requirement Availability | Ranking Factor |
+| Technical Alignment | Ranking Factor |
 |---|---:|
-| Required technical skills available | 1.00 |
-| Technical skills available only as preferred requirements | 0.75 |
-| Insufficient technical skill information | 0.50 |
+| At least one required technical requirement matched | 1.00 |
+| No required technical requirements matched | 0.50 |
+| Preferred-only technical requirements with a match | 0.75 |
+| Preferred-only technical requirements without a match | 0.50 |
+| Insufficient technical requirement information | 0.50 |
 
-These factors are heuristic implementation choices and have not yet been calibrated through formal evaluation.
+Alternative skill groups are counted as individual requirements
+rather than treating every alternative as mandatory.
 
-Compatibility and ranking scores are matching indicators, not probabilities of internship selection.
+The technical factor is a heuristic ranking adjustment.
+Detailed required and preferred technical match ratios are
+reported separately.
+
+Confirmed mandatory eligibility mismatches are ranked after
+candidates without confirmed mandatory mismatches, regardless
+of their numerical ranking scores.
+
+Compatibility and ranking scores are matching indicators,
+not probabilities of internship selection.
 
 ### Eligibility Verification
 
@@ -592,24 +605,270 @@ These results represent functional implementation checks. They do not establish 
 - Recommendations use historical internship postings rather than verified active vacancies.
 - Structured requirement extraction may contain incomplete or inaccurate information.
 - Skill matching depends on the available vocabulary and resume evidence.
-- Complex alternative requirements require further evaluation.
+- Recognized alternative requirements are supported, but unfamiliar expressions may remain unresolved.
 - Education and experience requirements may remain unresolved.
 - Project matching relies on recognized activity patterns.
 - Compatibility weights and ranking adjustments are heuristic.
 - Recommendation explanations are template-based.
-- Eligibility warnings do not establish confirmed eligibility or ineligibility.
+- Unresolved eligibility warnings require manual verification. Confirmed mandatory degree mismatches are ranked below candidates without confirmed mismatches.
 - Gemini API availability and rate limits affect semantic retrieval.
 - Recommendation results are not persistently stored in the frontend.
 - Authentication and secure account management are not implemented.
-- Mobile recommendation result cards and some frontend error states require further testing.
+- Desktop and mobile recommendation smoke tests have passed. Broader device and error-state coverage remains future work.
 - Dataset redistribution and third-party processing permissions require verification.
 
-Formal retrieval quality assessment, matching accuracy evaluation, ranking analysis and further refinement are planned for M2.4.
+Retrieval quality assessment, matching evaluation, ranking analysis and targeted refinement were completed in M2.4.
+
+
+## Matching and Retrieval Evaluation (M2.4)
+
+M2.4 evaluates the internship recommendation pipeline through
+synthetic student profiles, partially annotated suitability
+judgments, regression testing and live end-to-end execution.
+
+### Evaluation Objectives
+
+- Evaluate semantic retrieval relevance.
+- Measure Top-K recommendation quality.
+- Assess required and preferred skill matching.
+- Validate compatibility score consistency.
+- Compare rankings against expected suitability judgments.
+- Validate recommendation explanations and eligibility warnings.
+- Identify ranking limitations and implement targeted refinements.
+- Verify backend, frontend and browser integration.
+
+### Evaluation Profiles
+
+| Profile | Career Focus |
+|---|---|
+| P01 | Artificial Intelligence and Machine Learning |
+| P02 | Frontend Development |
+| P03 | Data Analytics |
+| P04 | Software Engineering |
+| P05 | Cybersecurity |
+| P06 | UI/UX Design |
+| P07 | Beginner Technical Profile |
+| P08 | Non-technical negative control |
+| P09 | Empty-profile negative control |
+
+Seven profiles support semantic retrieval. Two negative controls
+verify rejection of insufficient career-related information.
+
+The evaluation uses a historical dataset of 150 internships
+and a fixed reference year of 2026.
+
+### Ground Truth and Evaluation Methodology
+
+The evaluation annotations contain:
+
+- 36 suitability judgments.
+- 33 relevance judgments across searchable profiles.
+- 25 known relevant profile-job pairs.
+- 17 known suitable profile-job pairs.
+- 8 known highly suitable profile-job pairs.
+
+Judgments were prepared from selected internship records and
+synthetic student profiles without using recommendation scores.
+
+The annotations are assistant-generated, partially complete
+and not independently human-verified.
+
+Unjudged internships are not automatically classified as
+irrelevant or unsuitable. Reported recall refers to known
+annotated pairs rather than exhaustive dataset-wide recall.
+
+### Retrieval Configuration Evaluation
+
+Five retrieval depths were evaluated using cached semantic
+retrieval results and the production ranking pipeline.
+
+| Retrieval Depth | Candidate Instances | Top-5 Known Suitable | Top-10 Known Suitable | Top-20 Known Suitable |
+|---:|---:|---:|---:|---:|
+| 10 | 116 | 5 | 10 | 14 |
+| 15 | 166 | 6 | 11 | 17 |
+| 20 | 216 | 6 | 10 | 15 |
+| 30 | 277 | 5 | 10 | 15 |
+| 40 | 280 | 5 | 9 | 13 |
+
+A retrieval depth of 15 was selected because it achieved
+the strongest Top-10 and Top-20 known suitability results
+while limiting the candidate pool size.
+
+The production configuration uses:
+
+- 15 internships per semantic query.
+- A maximum of 40 unique candidates per student profile.
+- A default API response size of 10 recommendations.
+- A configurable API response size between 1 and 20.
+
+The offline experiment evaluated 1,055 candidate instances
+across all five retrieval configurations.
+
+### Matching and Ranking Refinements
+
+The evaluation resulted in the following improvements:
+
+- Context-aware alternative skill requirement resolution.
+- Recognition of certifications intended for future acquisition.
+- Strict mandatory degree requirement detection.
+- Evidence-based technical ranking adjustments.
+- Required and preferred technical alignment reporting.
+- Mandatory eligibility mismatch ordering.
+- Additional work authorization and citizenship review detection.
+- Eligibility detection within extracted responsibilities.
+- Expanded recommendation explanations.
+- Frontend visualization of technical alignment and requirement
+  interpretation.
+
+### Matching-Only Ranking Evaluation
+
+| Metric | Original | Refined |
+|---|---:|---:|
+| Comparable suitability pairs | 52 | 52 |
+| Correctly ordered pairs | 38 | 46 |
+| Incorrectly ordered pairs | 14 | 6 |
+| Pairwise ranking accuracy | 73.08% | 88.46% |
+
+Pairwise ranking accuracy improved by 15.38 percentage points.
+
+These are in-sample results on partially annotated evaluation
+data, not independently validated generalization accuracy.
+
+### Live End-to-End Evaluation
+
+The final evaluation executed the production recommendation
+engine using live Gemini query embeddings and the existing
+vector index.
+
+| Metric | Result |
+|---|---:|
+| Searchable profiles evaluated | 7 |
+| Negative controls passed | 2 |
+| Logical semantic queries | 20 |
+| Candidate instances | 166 |
+| Known relevant pairs retrieved | 19/25 |
+| Known relevant retrieval recall | 76.00% |
+| Known suitable pairs retrieved | 17/17 |
+| Known suitable retrieval recall | 100.00% |
+| Known highly suitable pairs retrieved | 8/8 |
+| Correct conditional suitability pairs | 15/19 |
+| Conditional pairwise ranking accuracy | 78.95% |
+| Eligibility ordering violations | 0 |
+| Live and cached ranking consistency | 7/7 profiles |
+| Mean live profile execution time | 2.51 seconds |
+
+Execution time excludes initial recommendation engine
+construction. Logical query counts exclude API retries.
+
+### Top-K Recommendation Quality
+
+| Metric | Top 5 | Top 10 | Top 20 |
+|---|---:|---:|---:|
+| Known relevant pairs | 6 | 11 | 18 |
+| Known suitable pairs | 6 | 11 | 17 |
+| Known highly suitable pairs | 4 | 7 | 8 |
+| Known suitable recall | 35.29% | 64.71% | 100.00% |
+
+The internal evaluation supports cutoffs up to 40 candidates.
+The public API limits returned recommendations to 20.
+
+Although all known suitable internships were recovered within
+Top 20, early ranking quality remains an improvement opportunity.
+
+At retrieval depth 15, structured reranking reduced known
+suitable Top-5 results from 10 to 6 compared with semantic-only
+ordering. Top-20 known suitable results increased from 16 to 17.
+
+This trade-off is retained as an evaluation finding rather than
+claiming improvement at every ranking cutoff.
+
+### Regression and Integration Testing
+
+| Validation | Result |
+|---|---|
+| Cumulative targeted checks | 414/414 passed |
+| Permanent regression checks | 168/168 passed |
+| Dataset-wide eligibility validation | 150/150 processed |
+| Offline live-evaluation preflight | 64/64 passed |
+| Backend compilation and dependency checks | Passed |
+| Frontend ESLint | Passed |
+| Frontend production build | Passed |
+| Live browser recommendation API | HTTP 200 |
+| Browser internships evaluated | 25 |
+| Browser recommendations returned | 10/10 |
+| Browser API response time | 7.71 seconds |
+| Desktop recommendation rendering | Passed |
+| Expanded recommendation details | Passed |
+| Mobile recommendation smoke test | Passed at 390 x 642 |
+| Browser console | No visible runtime errors |
+
+Targeted checks represent implementation validation,
+not recommendation accuracy percentages.
+
+Two non-blocking browser autofill warnings were observed.
+Three hidden console messages were not independently inspected.
+
+### Evaluation Reproducibility
+
+Evaluation scripts are maintained in the `evaluation/` directory.
+
+The evaluation workflow includes synthetic profile generation,
+ground truth preparation, retrieval metric validation, retrieval
+depth comparison, matching-only evaluation, offline evaluation,
+component diagnostics, regression testing and live evaluation.
+
+Core evaluation commands:
+
+```bash
+python -m evaluation.create_sample_profiles
+python -m evaluation.test_skill_requirement_resolver
+python -m evaluation.test_technical_alignment
+python -m evaluation.test_recommendation_explanations
+python -m evaluation.evaluate_retrieval
+python -m evaluation.evaluate_retrieval_depth
+python -m evaluation.evaluate_end_to_end_offline
+python -m evaluation.evaluate_end_to_end_live
+```
+
+Dataset-dependent evaluations require the local internship
+knowledge base, compatible vector index, evaluation annotations
+and prerequisite evaluation artifacts.
+
+Live evaluations require a valid Gemini API configuration
+and may consume API quota.
+
+Generated reports, checkpoints, raw internship descriptions
+and dataset-derived artifacts are retained locally pending
+redistribution permission verification.
+
+A fresh repository clone alone is therefore insufficient
+to reproduce the complete historical evaluation.
+
+### Evaluation Limitations
+
+- Ground truth annotations are partial and not human-verified.
+- The evaluation uses seven searchable synthetic profiles.
+- Matching-only and live pairwise metrics evaluate different
+  candidate pairs and are not directly comparable.
+- Ranking refinements were evaluated using development annotations.
+- Early Top-K recommendation quality requires further improvement.
+- Specialized technical vocabulary remains incomplete.
+- Job section extraction may miss or misclassify requirements.
+- Compatibility weights and technical factors are heuristic.
+- Missing resume evidence does not prove absence of a skill.
+- Unresolved eligibility requires manual verification.
+- Historical internships are not verified active vacancies.
+- API latency and availability depend on external services.
+- Dataset redistribution permissions require verification.
+
+M2.4 completes the planned technical evaluation and refinement
+phase while retaining these limitations for future development.
 
 
 ## Documentation
 
 Research and technical documentation are available in the `docs/` directory.
+
 
 ## Project Status
 
@@ -617,6 +876,6 @@ Research and technical documentation are available in the `docs/` directory.
 - M2.1 – Internship Dataset and Knowledge Base completed.
 - M2.2 – RAG Pipeline and Semantic Search completed.
 - M2.3 – Job-Resume Matching Agent completed.
-- M2.4 – Matching and Retrieval Evaluation is the next development phase.
+- M2.4 - Matching and Retrieval Evaluation completed.
 
 The project is under active development.

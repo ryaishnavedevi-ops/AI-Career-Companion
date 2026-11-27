@@ -88,6 +88,22 @@ function RecommendationCard({ item }) {
   const warnings = explanation.warnings ?? [];
   const eligibilityReviews = explanation.eligibility_reviews ?? [];
 
+  const requirementNotes = explanation.requirement_notes ?? [];
+  const scoreExplanation = explanation.score_explanation ?? {};
+
+  const requiredTechnical =
+    scoreExplanation.required_technical_alignment;
+
+  const preferredTechnical =
+    scoreExplanation.preferred_technical_alignment;
+
+  const technicalFactor =
+    scoreExplanation.technical_evidence_factor;
+
+  const mandatoryMismatch =
+    item.mandatory_eligibility_mismatch === true ||
+    explanation.mandatory_eligibility_mismatch === true;
+
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -191,7 +207,31 @@ function RecommendationCard({ item }) {
 
       {/* Eligibility warning */}
 
-      {item.eligibility_review_required && (
+      {mandatoryMismatch && (
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-red-100 bg-red-50 p-4">
+
+          <AlertCircle
+            size={19}
+            className="mt-0.5 shrink-0 text-red-600"
+          />
+
+          <div>
+            <p className="text-sm font-semibold text-red-800">
+              Mandatory education mismatch
+            </p>
+
+            <p className="mt-1 text-xs leading-5 text-red-700">
+              Recorded education does not meet the identified
+              mandatory degree requirement. This internship is
+              deprioritized regardless of its numeric ranking score.
+              Verify the original posting before applying.
+            </p>
+          </div>
+
+        </div>
+      )}
+
+      {item.eligibility_review_required && !mandatoryMismatch && (
         <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50 p-4">
 
           <AlertCircle
@@ -252,6 +292,166 @@ function RecommendationCard({ item }) {
             </p>
 
           </div>
+
+
+          {/* Technical alignment */}
+
+          {scoreExplanation.technical_alignment_status && (
+            <div className="rounded-xl border border-slate-200 p-4">
+
+              <h4 className="font-semibold text-slate-900">
+                Technical alignment
+              </h4>
+
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {scoreExplanation.technical_alignment_reason}
+              </p>
+
+              {typeof technicalFactor === "number" && (
+                <div className="mt-3 rounded-lg bg-slate-50 p-3">
+                  <p className="text-xs text-slate-500">
+                    Technical ranking factor
+                  </p>
+
+                  <p className="mt-1 text-xl font-bold text-violet-700">
+                    {technicalFactor.toFixed(2)}x
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-4 space-y-4">
+
+                {[
+                  {
+                    label: "Required technical requirements",
+                    data: requiredTechnical,
+                  },
+                  {
+                    label: "Preferred technical requirements",
+                    data: preferredTechnical,
+                  },
+                ].map(({ label, data }) => (
+
+                  data && (
+                    <div key={label}>
+
+                      <h5 className="text-sm font-semibold text-slate-800">
+                        {label}
+                      </h5>
+
+                      {data.total_requirements > 0 ? (
+                        <>
+                          <p className="mt-2 text-xs text-slate-600">
+                            {data.matched_requirements} of{" "}
+                            {data.total_requirements} requirements matched
+                          </p>
+
+                          <div className="mt-2">
+                            <ScoreDisplay
+                              label="Technical requirement match"
+                              value={
+                                typeof data.match_ratio === "number"
+                                  ? data.match_ratio * 100
+                                  : null
+                              }
+                              color="bg-violet-500"
+                            />
+                          </div>
+
+                          {data.matched_skills?.length > 0 && (
+                            <div className="mt-3">
+                              <p className="mb-2 text-xs font-medium text-slate-600">
+                                Matched technical skills
+                              </p>
+
+                              <SkillChips skills={data.matched_skills} />
+                            </div>
+                          )}
+
+                          {data.missing_requirements?.length > 0 && (
+                            <div className="mt-3">
+                              <p className="mb-2 text-xs font-medium text-slate-600">
+                                Unmatched technical requirements
+                              </p>
+
+                              <SkillChips
+                                skills={data.missing_requirements}
+                                variant="gap"
+                              />
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="mt-2 text-xs text-slate-500">
+                          No resolved technical requirements available
+                          in this category.
+                        </p>
+                      )}
+
+                    </div>
+                  )
+                ))}
+
+              </div>
+
+            </div>
+          )}
+
+
+          {/* Contextual requirement interpretation */}
+
+          {requirementNotes.length > 0 && (
+            <div>
+
+              <h4 className="mb-3 font-semibold text-slate-900">
+                Requirement interpretation
+              </h4>
+
+              <div className="space-y-3">
+
+                {requirementNotes.map((note, index) => (
+                  <div
+                    key={index}
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                  >
+
+                    <p className="text-sm font-semibold text-slate-800">
+                      {note.type === "future_certification"
+                        ? "Future certification: " + note.skill
+                        : note.type === "alternative_requirement"
+                          ? (note.skills ?? []).join(" OR ")
+                          : formatLabel(note.type)}
+                    </p>
+
+                    {note.category && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        {formatLabel(note.category)}
+                      </p>
+                    )}
+
+                    {note.type === "alternative_requirement" && (
+                      <p className={`mt-1 text-xs font-medium ${
+                        note.satisfied
+                          ? "text-emerald-700"
+                          : "text-amber-700"
+                      }`}>
+                        {note.satisfied
+                          ? "Satisfied"
+                          : "No matching option recorded"}
+                      </p>
+                    )}
+
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {note.message}
+                    </p>
+
+                  </div>
+                ))}
+
+              </div>
+
+            </div>
+          )}
 
 
           {/* Strengths */}
@@ -812,7 +1012,7 @@ export default function Recommendations() {
 
           {/* Statistics */}
 
-          <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
             {[
               {
@@ -824,8 +1024,12 @@ export default function Recommendations() {
                 value: recommendations.length,
               },
               {
-                label: "Candidates needing eligibility review",
+                label: "Internships needing eligibility review",
                 value: statistics.eligibility_review_count ?? 0,
+              },
+              {
+                label: "Mandatory eligibility mismatches",
+                value: statistics.mandatory_eligibility_mismatch_count ?? 0,
               },
             ].map((stat) => (
               <div
@@ -859,7 +1063,9 @@ export default function Recommendations() {
             <p>
               <strong>Ranking score:</strong>{" "}
               Compatibility adjusted for evidence coverage
-              and technical requirement availability.
+              and technical alignment. Mandatory eligibility
+              mismatches are deprioritized before numeric
+              ranking scores are compared.
             </p>
 
             <p>
